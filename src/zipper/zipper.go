@@ -18,6 +18,8 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+
+	"github.com/zinirun/eden-zip/src/uriuri"
 )
 
 var (
@@ -28,15 +30,18 @@ var (
 )
 
 // Zipper make .zip file from urls
-func Zipper(urls []string, zipfilename string) string {
+func Zipper(urls []string, zipfilename string) (string, string) {
 	filenames := []string{}
 	chForDownload := make(chan string)
+
+	randomPath := "tmp/" + uriuri.New() + "/"
+	os.Mkdir(randomPath, 0755)
 
 	fmt.Println("Start Downloading ...")
 
 	for _, url := range urls {
 		go func(url string, c chan<- string) {
-			f, err := downloadFile(url)
+			f, err := downloadFile(url, randomPath)
 			if err != nil {
 				fmt.Println(err)
 				c <- "ERR"
@@ -58,25 +63,25 @@ func Zipper(urls []string, zipfilename string) string {
 	fmt.Println("Start Making zip ...")
 
 	if len(filenames) == 0 {
-		return "There's no files to download avaliable."
+		return "", "There's no files to download avaliable."
 	}
-	err := writeZip(zipfilename, filenames)
+	err := writeZip(zipfilename, filenames, randomPath)
 	if err != nil {
-		return "Errors occured while making zip."
+		return "", "Errors occured while making zip."
 	}
-	return ""
+	return randomPath, ""
 }
 
-func writeZip(outFilename string, filenames []string) error {
+func writeZip(outFilename string, filenames []string, path string) error {
 	c := make(chan bool)
-	outf, err := os.Create(outFilename)
+	outf, err := os.Create(path + outFilename)
 	errorHandler(err)
 	zw := zip.NewWriter(outf)
 	for _, filename := range filenames {
 		go func(filename string, c chan<- bool) {
 			w, err := zw.Create(filename)
 			errorHandler(err)
-			f, err := os.Open(filename)
+			f, err := os.Open(path + filename)
 			errorHandler(err)
 			defer f.Close()
 			_, err = io.Copy(w, f)
@@ -89,13 +94,13 @@ func writeZip(outFilename string, filenames []string) error {
 	}
 	defer func() {
 		for _, filename := range filenames {
-			os.Remove(filename)
+			os.Remove(path + filename)
 		}
 	}()
 	return zw.Close()
 }
 
-func downloadFile(url string) (string, error) {
+func downloadFile(url string, path string) (string, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", errBadStatus
@@ -104,7 +109,7 @@ func downloadFile(url string) (string, error) {
 	if err != nil {
 		return "", errGetFilePath
 	}
-	f, err := os.Create(filename)
+	f, err := os.Create(path + filename)
 	if err != nil {
 		return "", errOSCreate
 	}

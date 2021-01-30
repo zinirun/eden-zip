@@ -2,13 +2,13 @@ package main
 
 import (
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/zinirun/eden-zip/src/zipper"
 )
 
-const fileName string = "edenzip-download.zip"
 const staticDir string = "static/"
 
 func splitUrls(v string) []string {
@@ -25,14 +25,16 @@ func handleDownload(c echo.Context) error {
 	if filename == "" {
 		filename = "edenzip-download.zip"
 	}
-	errString := zipper.Zipper(urls, filename)
+	filePath, errString := zipper.Zipper(urls, filename)
 	if errString != "" {
 		return c.String(http.StatusOK, "Sorry, error occured: "+errString)
 	}
-	return c.Attachment(fileName, fileName)
+	return c.Attachment(filePath+filename, filename)
 }
 
 func main() {
+	defer os.Remove("tmp")
+	os.Mkdir("tmp", 0755)
 	e := echo.New()
 	e.GET("/", handleIndex)
 	e.POST("/download", handleDownload)
