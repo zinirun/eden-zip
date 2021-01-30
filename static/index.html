@@ -6,19 +6,92 @@
     <title>EdenZip</title>
   </head>
   <style>
+    body,
+    * {
+      outline: none;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+        Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    }
+    .container {
+      width: 600px;
+      margin: 0 auto;
+    }
+    h2 {
+      height: 26px;
+      display: flex;
+    }
+    h2 > span {
+      width: 100%;
+    }
     .logo-title {
       color: #00b8df;
     }
+    label {
+      font-size: 0.9rem;
+    }
+    textarea[name="urls"] {
+      overflow: hidden;
+      resize: none;
+      font-size: 1.1rem;
+      width: 100%;
+      border-radius: 5px;
+      padding: 3px;
+    }
+    .input-container {
+      width: 101%;
+      display: flex;
+    }
+    input {
+      border-radius: 5px;
+      padding: 5px;
+      border: 1px grey solid;
+    }
+    button {
+      font-size: 1rem;
+      margin-left: 5px;
+      width: 100%;
+      padding: 5px;
+      background: #00b8df;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      font-weight: 600;
+    }
   </style>
+  <script>
+    function resize(obj) {
+      obj.style.height = "1px";
+      obj.style.height = 12 + obj.scrollHeight + "px";
+    }
+  </script>
   <body>
     <div class="container">
       <h2>
         <span class="logo-title">EdenZip</span>
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Go_Logo_Blue.svg/1200px-Go_Logo_Blue.svg.png"
+          width="60px"
+        />
       </h2>
       <div class="content-wrapper">
         <form method="POST" action="/download">
-          <div><textarea name="urls"></textarea></div>
-          <div><button>Start Download zip</button></div>
+          <div>
+            <textarea
+              onkeydown="resize(this)"
+              onkeyup="resize(this)"
+              placeholder="Enter urls with newline"
+              name="urls"
+              spellcheck="false"
+            ></textarea>
+          </div>
+          <div class="input-container">
+            <input
+              type="text"
+              name="filename"
+              placeholder="edenzip-download.zip"
+            />
+            <button>Start Download zip</button>
+          </div>
         </form>
       </div>
     </div>

@@ -2,15 +2,10 @@ package zipper
 
 /*
 
-func main() {
-	urls := []string{
-		"https://github.com/zinirun/zinirun/raw/main/icons/go.png",
-		"https://github.com/zinirun/zinirun/raw/main/icons/typescript.png",
-		"https://github.com/zinirun/zinirun/raw/main/icons/nodejs.png",
-		"https://github.com/zinirun/zinirun/raw/main/icons/nestjs.png",
-	}
-	synczip.AdvZipper(urls)
-}
+https://github.com/zinirun/zinirun/raw/main/icons/go.png
+https://github.com/zinirun/zinirun/raw/main/icons/typescript.png
+https://github.com/zinirun/zinirun/raw/main/icons/nodejs.png
+https://github.com/zinirun/zinirun/raw/main/icons/nestjs.png
 
 */
 
@@ -26,7 +21,7 @@ import (
 )
 
 // Zipper make .zip file from urls
-func Zipper(urls []string) {
+func Zipper(urls []string, zipfilename string) {
 	filenames := []string{}
 	chForDownload := make(chan string)
 
@@ -46,7 +41,7 @@ func Zipper(urls []string) {
 
 	fmt.Println("Start Making zip ...")
 
-	err := writeZip("edenzip-download.zip", filenames)
+	err := writeZip(zipfilename, filenames)
 	errorLogHandler(err)
 }
 

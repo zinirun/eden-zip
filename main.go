@@ -20,7 +20,11 @@ func handleIndex(c echo.Context) error {
 
 func handleDownload(c echo.Context) error {
 	urls := splitUrls(c.FormValue("urls"))
-	zipper.Zipper(urls)
+	filename := c.FormValue("filename")
+	if filename == "" {
+		filename = "edenzip-download.zip"
+	}
+	zipper.Zipper(urls, filename)
 	return c.Attachment(fileName, fileName)
 }
 
