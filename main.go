@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/labstack/echo"
@@ -24,7 +25,10 @@ func handleDownload(c echo.Context) error {
 	if filename == "" {
 		filename = "edenzip-download.zip"
 	}
-	zipper.Zipper(urls, filename)
+	errString := zipper.Zipper(urls, filename)
+	if errString != "" {
+		return c.String(http.StatusOK, "Sorry, error occured: "+errString)
+	}
 	return c.Attachment(fileName, fileName)
 }
 

@@ -11,17 +11,24 @@ https://github.com/zinirun/zinirun/raw/main/icons/nestjs.png
 
 import (
 	"archive/zip"
+	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 )
 
+var (
+	errBadStatus   error = errors.New("Bad Status")
+	errGetFilePath error = errors.New("Can't get filepath")
+	errOSCreate    error = errors.New("Can't os.Create")
+	errIOCopy      error = errors.New("Can't io.Copy")
+)
+
 // Zipper make .zip file from urls
-func Zipper(urls []string, zipfilename string) {
+func Zipper(urls []string, zipfilename string) string {
 	filenames := []string{}
 	chForDownload := make(chan string)
 
@@ -30,19 +37,34 @@ func Zipper(urls []string, zipfilename string) {
 	for _, url := range urls {
 		go func(url string, c chan<- string) {
 			f, err := downloadFile(url)
-			errorLogHandler(err)
+			if err != nil {
+				fmt.Println(err)
+				c <- "ERR"
+				return
+			}
 			c <- f
 		}(url, chForDownload)
 	}
 
 	for range urls {
-		filenames = append(filenames, <-chForDownload)
+		go func(filename string) {
+			if filename == "ERR" {
+				return
+			}
+			filenames = append(filenames, filename)
+		}(<-chForDownload)
 	}
 
 	fmt.Println("Start Making zip ...")
 
+	if len(filenames) == 0 {
+		return "There's no files to download avaliable."
+	}
 	err := writeZip(zipfilename, filenames)
-	errorLogHandler(err)
+	if err != nil {
+		return "Errors occured while making zip."
+	}
+	return ""
 }
 
 func writeZip(outFilename string, filenames []string) error {
@@ -75,40 +97,40 @@ func writeZip(outFilename string, filenames []string) error {
 
 func downloadFile(url string) (string, error) {
 	resp, err := http.Get(url)
-	errorStringHandler(err)
+	if err != nil {
+		return "", errBadStatus
+	}
 	filename, err := getFileName(url)
-	errorStringHandler(err)
+	if err != nil {
+		return "", errGetFilePath
+	}
 	f, err := os.Create(filename)
-	errorStringHandler(err)
-	defer f.Close()
+	if err != nil {
+		return "", errOSCreate
+	}
+	defer func() {
+		resp.Body.Close()
+		f.Close()
+	}()
 	_, err = io.Copy(f, resp.Body)
-	return filename, err
+	if err != nil {
+		return "", errIOCopy
+	}
+	return filename, nil
 }
 
 func getFileName(rawurl string) (string, error) {
 	url, err := url.Parse(rawurl)
 	if err != nil {
-		return "", err
+		return "", errGetFilePath
 	}
 	return filepath.Base(url.Path), nil
 }
 
-func errorLogHandler(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func errorHandler(err error) error {
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 	return nil
-}
-
-func errorStringHandler(err error) (string, error) {
-	if err != nil {
-		return "", err
-	}
-	return "", nil
 }
