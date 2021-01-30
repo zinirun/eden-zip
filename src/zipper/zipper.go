@@ -18,6 +18,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/zinirun/eden-zip/src/uriuri"
 )
@@ -73,12 +74,14 @@ func Zipper(urls []string, zipfilename string) (string, string) {
 }
 
 func writeZip(outFilename string, filenames []string, path string) error {
-	c := make(chan bool)
 	outf, err := os.Create(path + outFilename)
 	errorHandler(err)
+	var wg sync.WaitGroup
 	zw := zip.NewWriter(outf)
 	for _, filename := range filenames {
-		go func(filename string, c chan<- bool) {
+		wg.Add(1)
+		go func(filename string) {
+			defer wg.Done()
 			w, err := zw.Create(filename)
 			errorHandler(err)
 			f, err := os.Open(path + filename)
@@ -86,12 +89,9 @@ func writeZip(outFilename string, filenames []string, path string) error {
 			defer f.Close()
 			_, err = io.Copy(w, f)
 			errorHandler(err)
-			c <- true
-		}(filename, c)
+		}(filename)
 	}
-	for range filenames {
-		<-c
-	}
+	wg.Wait()
 	defer func() {
 		for _, filename := range filenames {
 			os.Remove(path + filename)
@@ -110,6 +110,7 @@ func downloadFile(url string, path string) (string, error) {
 		return "", errGetFilePath
 	}
 	f, err := os.Create(path + filename)
+	fmt.Println(f)
 	if err != nil {
 		return "", errOSCreate
 	}
