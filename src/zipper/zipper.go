@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	errBadStatus   error = errors.New("Bad Status")
+	errBadStatus   error = errors.New("Bad Status Exists while http.Get")
 	errGetFilePath error = errors.New("Can't get filepath")
 	errOSCreate    error = errors.New("Can't os.Create")
 	errIOCopy      error = errors.New("Can't io.Copy")
