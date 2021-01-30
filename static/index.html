@@ -6,22 +6,20 @@
     <title>EdenZip</title>
   </head>
   <style>
-    body {
-      background: #444;
-    }
     .logo-title {
       color: #00b8df;
     }
   </style>
   <body>
     <div class="container">
-      <h1>
-        <img src="edenzip.svg" width="40px" /><span class="logo-title"
-          >EdenZip</span
-        >
-      </h1>
+      <h2>
+        <span class="logo-title">EdenZip</span>
+      </h2>
       <div class="content-wrapper">
-        <textarea></textarea>
+        <form method="POST" action="/download">
+          <div><textarea name="urls"></textarea></div>
+          <div><button>Start Download zip</button></div>
+        </form>
       </div>
     </div>
   </body>

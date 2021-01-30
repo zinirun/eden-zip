@@ -25,8 +25,8 @@ import (
 	"path/filepath"
 )
 
-// AdvZipper make .zip file from urls using go routines
-func AdvZipper(urls []string) {
+// Zipper make .zip file from urls
+func Zipper(urls []string) {
 	filenames := []string{}
 	chForDownload := make(chan string)
 
@@ -34,7 +34,7 @@ func AdvZipper(urls []string) {
 
 	for _, url := range urls {
 		go func(url string, c chan<- string) {
-			f, err := advDownload(url)
+			f, err := downloadFile(url)
 			errorLogHandler(err)
 			c <- f
 		}(url, chForDownload)
@@ -46,11 +46,11 @@ func AdvZipper(urls []string) {
 
 	fmt.Println("Start Making zip ...")
 
-	err := advWriteZip("icons.zip", filenames)
+	err := writeZip("edenzip-download.zip", filenames)
 	errorLogHandler(err)
 }
 
-func advWriteZip(outFilename string, filenames []string) error {
+func writeZip(outFilename string, filenames []string) error {
 	c := make(chan bool)
 	outf, err := os.Create(outFilename)
 	errorHandler(err)
@@ -78,10 +78,10 @@ func advWriteZip(outFilename string, filenames []string) error {
 	return zw.Close()
 }
 
-func advDownload(url string) (string, error) {
+func downloadFile(url string) (string, error) {
 	resp, err := http.Get(url)
 	errorStringHandler(err)
-	filename, err := advURLToFilename(url)
+	filename, err := getFileName(url)
 	errorStringHandler(err)
 	f, err := os.Create(filename)
 	errorStringHandler(err)
@@ -90,7 +90,7 @@ func advDownload(url string) (string, error) {
 	return filename, err
 }
 
-func advURLToFilename(rawurl string) (string, error) {
+func getFileName(rawurl string) (string, error) {
 	url, err := url.Parse(rawurl)
 	if err != nil {
 		return "", err
