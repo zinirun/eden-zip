@@ -38,5 +38,5 @@ func main() {
 	e := echo.New()
 	e.GET("/", handleIndex)
 	e.POST("/download", handleDownload)
-	e.Logger.Fatal(e.Start(":1323"))
+	e.Logger.Fatal(e.Start(":" + os.Getenv("PORT")))
 }
