@@ -3,6 +3,15 @@
 
 ![eden-zip](.github/eden-zip.gif)
 
+## Usage
+- Try [EdenZip](eden-zip.herokuapp.com)
+- Run in localhost environment
+  ```bash
+  git clone https://github.com/zinirun/eden-zip.git
+  cd ./eden-zip
+  go run main.go
+  ```
+
 ## Logic
 
 1. Client request with urls `string` and filename `string`
