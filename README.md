@@ -28,4 +28,4 @@ github.com/labstack/gommon v0.3.0 // indirect
 golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
 ```
 
-and (uriuri by dchest)[https://github.com/dchest/uniuri]
+and [uriuri by dchest](https://github.com/dchest/uniuri)
