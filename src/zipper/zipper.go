@@ -32,10 +32,10 @@ var (
 
 // Zipper make .zip file from urls
 func Zipper(urls []string, zipfilename string) (string, string) {
+	randomPath := "tmp/" + uriuri.New() + "/"
 	filenames := []string{}
 	chForDownload := make(chan string)
 
-	randomPath := "tmp/" + uriuri.New() + "/"
 	os.Mkdir(randomPath, 0755)
 
 	fmt.Println("Start Downloading ...")
@@ -61,43 +61,65 @@ func Zipper(urls []string, zipfilename string) (string, string) {
 		}(<-chForDownload)
 	}
 
-	fmt.Println("Start Making zip ...")
-
 	if len(filenames) == 0 {
 		return "", "There's no files to download avaliable."
 	}
-	err := writeZip(zipfilename, filenames, randomPath)
-	if err != nil {
-		return "", "Errors occured while making zip."
+
+	fmt.Println("Start Making zip ...")
+
+	files := make(chan *os.File)
+	zipWait := writeZip(zipfilename, files, randomPath)
+	var wg sync.WaitGroup
+	wg.Add(len(filenames))
+	for _, filename := range filenames {
+		go func(name string) {
+			defer wg.Done()
+			f, err := os.Open(name)
+			if err != nil {
+				panic(err)
+			}
+			files <- f
+		}(randomPath + filename)
 	}
+
+	wg.Wait()
+	close(files)
+	zipWait.Wait()
+
+	defer func() {
+		for _, f := range filenames {
+			os.Remove(randomPath + f)
+		}
+	}()
+
 	return randomPath, ""
 }
 
-func writeZip(outFilename string, filenames []string, path string) error {
+func writeZip(outFilename string, files chan *os.File, path string) *sync.WaitGroup {
 	outf, err := os.Create(path + outFilename)
 	errorHandler(err)
 	var wg sync.WaitGroup
+	wg.Add(1)
 	zw := zip.NewWriter(outf)
-	for _, filename := range filenames {
-		wg.Add(1)
-		go func(filename string) {
-			defer wg.Done()
-			w, err := zw.Create(filename)
-			errorHandler(err)
-			f, err := os.Open(path + filename)
-			errorHandler(err)
-			defer f.Close()
-			_, err = io.Copy(w, f)
-			errorHandler(err)
-		}(filename)
-	}
-	wg.Wait()
-	defer func() {
-		for _, filename := range filenames {
-			os.Remove(path + filename)
+	go func() {
+		defer wg.Done()
+		defer outf.Close()
+		var err error
+		var fw io.Writer
+		for f := range files {
+			if fw, err = zw.Create(filepath.Base(f.Name())); err != nil {
+				panic(err)
+			}
+			io.Copy(fw, f)
+			if err = f.Close(); err != nil {
+				panic(err)
+			}
+		}
+		if err = zw.Close(); err != nil {
+			panic(err)
 		}
 	}()
-	return zw.Close()
+	return &wg
 }
 
 func downloadFile(url string, path string) (string, error) {
@@ -110,7 +132,6 @@ func downloadFile(url string, path string) (string, error) {
 		return "", errGetFilePath
 	}
 	f, err := os.Create(path + filename)
-	fmt.Println(f)
 	if err != nil {
 		return "", errOSCreate
 	}
